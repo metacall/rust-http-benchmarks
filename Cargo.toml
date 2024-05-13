@@ -3,16 +3,23 @@ name = "metacall_ssr_example"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-actix-web = { version = "4.5.1" }
-axum = "0.7.4"
-http-body-util = "0.1.1"
-metacall = "0.4.0"
-tokio = { version = "1.36.0", features = ["full"] }
-tracing-subscriber = "0.3.18"
-warp = "0.3.6"
+warp = { version = "0.3.7", default-features = false }
+metacall = { version = "0.4.0", default-features = false }
+http-body-util = { version = "0.1.1", default-features = false }
+tracing-subscriber = { version = "0.3.18", default-features = false }
+actix-web = { version = "4.5.1", default-features = false, features = [
+    "macros",
+] }
+axum = { version = "0.7.5", default-features = false, features = [
+    "http1",
+    "tokio",
+] }
+tokio = { version = "1.37.0", default-features = false, features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+] }
 
 [[bin]]
 name = "actix"
@@ -25,3 +32,9 @@ path = "src/axum.rs"
 [[bin]]
 name = "warp"
 path = "src/warp.rs"
+
+[profile.release]
+lto = "fat"
+opt-level = 3
+codegen-units = 1
+incremental = false

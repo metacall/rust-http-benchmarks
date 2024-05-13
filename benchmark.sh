@@ -1,8 +1,7 @@
 #!/bin/sh
+
+PORT=8080
 DURATION=3
-ACTIX_PORT=8080
-WARP_PORT=8081
-AXUM_PORT=8082
 
 echo "Installing node modules..."
 npm install
@@ -10,28 +9,48 @@ npm install
 echo "Building binaries..."
 cargo build --release
 
-printf "benchmarking actix..."
-./target/release/actix &
-disown
-sleep 3
-wrk -t1 -c1 -d"$DURATION"s "http://127.0.0.1:$ACTIX_PORT" >>actix.bench &
-echo "actix result saved to actix.bench"
-printf "benchmarking warp..."
-./target/release/warp &
-disown
-sleep 3
-wrk -t1 -c1 -d"$DURATION"s "http://127.0.0.1:$WARP_PORT" >>warp.bench &
-echo "warp result saved to warp.bench"
+export LD_LIBRARY_PATH="/usr/local/lib"
 
-printf "benchmarking axum..."
-./target/release/axum &
-disown
-sleep 3
-wrk -t1 -c1 -d"$DURATION"s "http://127.0.0.1:$AXUM_PORT" >>axum.bench &
-echo "axum result saved to axum.bench"
+benchmark_framework() {
+    # Don't output the dummy run
+    if [ $2 ]; then
+        echo "benchmarking $1..."
+    fi
 
-echo "killing http servers..."
-sleep 6
-pkill -c -9 actix
-pkill -c -9 axum
-pkill -c -9 warp
+    # Run the server
+    if [ $2 ]; then
+        "./target/release/$1" &
+    else
+        # Don't output the dummy run
+        "./target/release/$1" > /dev/null 2>&1 &
+    fi
+    # Wait for it bootstrap
+    sleep 3
+
+    # Benchmark and store the results if the second argument is true
+    if [ $2 ]; then
+        wrk -t1 -c1 -d"$DURATION"s "http://127.0.0.1:$PORT" >> "$1.bench"
+    else
+        # Don't output the dummy run
+        wrk -t1 -c1 -d"$DURATION"s "http://127.0.0.1:$PORT" > /dev/null 2>&1
+    fi
+
+    # Kill all and make sure everything is clear
+    disown -a
+    pkill -c -9 wrk > /dev/null 2>&1
+    pkill -c -9 $1 > /dev/null 2>&1
+    kill $(lsof -t -i:$PORT) > /dev/null 2>&1
+    sleep 1
+
+    if [ $2 ]; then
+        # Don't output the dummy run
+        echo "$1 result saved to $1.bench"
+    fi
+}
+
+# The first to be ran is always is the slowest. Let's run one as a dummy.
+benchmark_framework actix
+
+benchmark_framework axum true
+benchmark_framework warp true
+benchmark_framework actix true

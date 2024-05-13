@@ -9,15 +9,18 @@ async fn hello() -> impl Responder {
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> std::io::Result<()> {
+async fn main() {
     let _metacall = switch::initialize().unwrap();
     loaders::from_single_file("ts", "App.tsx").unwrap();
     let addr = "0.0.0.0:8080".to_string();
 
     println!("running on http://{}", addr);
 
+    // Actix has automated listeners for shutdown.
     HttpServer::new(|| App::new().service(hello))
-        .bind(addr)?
+        .bind(addr)
+        .unwrap()
         .run()
         .await
+        .unwrap();
 }

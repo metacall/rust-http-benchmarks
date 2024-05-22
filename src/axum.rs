@@ -1,21 +1,32 @@
-use axum::{response::Html, routing::get, Router};
+use axum::{extract::Path, response::Html, routing::get, Router};
 use metacall::{loaders, metacall, switch};
+use metacall_ssr_benchmark::fib;
 use tokio::{
     self,
     signal::unix::{signal, SignalKind},
 };
+
+async fn fib_route(Path(num): Path<usize>) -> Html<String> {
+    Html(metacall::<String>("Fibonacci", [num as i64, fib(num) as i64]).unwrap())
+}
+
+async fn root(Path(name): Path<String>) -> Html<String> {
+    Html(metacall::<String>("Hello", [name]).unwrap())
+}
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let _metacall = switch::initialize().unwrap();
     loaders::from_single_file("ts", "App.tsx").unwrap();
 
-    let app = Router::new().route("/", get(root));
+    let app = Router::new()
+        .route("/hello/:name", get(root))
+        .route("/fib/:num", get(fib_route));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
 
     println!(
-        "listening on {}",
+        "listening on http://{}",
         listener.local_addr().unwrap().to_string()
     );
 
@@ -33,8 +44,4 @@ async fn main() {
         })
         .await
         .unwrap();
-}
-
-async fn root() -> Html<String> {
-    Html(metacall::<String>("Hello", ["Metacall!".to_string()]).unwrap())
 }

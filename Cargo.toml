@@ -1,5 +1,5 @@
 [package]
-name = "metacall_ssr_example"
+name = "metacall_ssr_benchmark"
 version = "0.1.0"
 edition = "2021"
 

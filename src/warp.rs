@@ -1,4 +1,5 @@
 use metacall::{loaders, metacall, switch};
+use metacall_ssr_benchmark::fib;
 use std::net::SocketAddr;
 use tokio::{
     self,
@@ -11,8 +12,13 @@ async fn main() {
     let _metacall = switch::initialize().unwrap();
     loaders::from_single_file("ts", "App.tsx").unwrap();
 
-    let routes =
-        warp::any().map(|| html(metacall::<String>("Hello", ["Metacall!".to_string()]).unwrap()));
+    let hello_route = warp::path!("hello" / String)
+        .map(|name| html(metacall::<String>("Hello", [name]).unwrap()));
+
+    let fib_noute = warp::path!("fib" / usize)
+        .map(|num| html(metacall::<String>("Fibonacci", [num as i64, fib(num) as i64]).unwrap()));
+
+    let routes = warp::any().and(fib_noute.or(hello_route));
     let addr = "0.0.0.0:8080".to_string();
 
     println!("running on http://{}", addr);

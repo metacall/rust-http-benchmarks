@@ -1,7 +1,13 @@
 #!/bin/sh
 
 PORT=8080
-DURATION=3
+THREADS=8
+DURATION=15
+CLIENTS=1000
+
+
+HELLO_NAME=metacall
+FIB_NUMBER=25
 
 echo "Installing node modules..."
 npm install
@@ -29,10 +35,10 @@ benchmark_framework() {
 
     # Benchmark and store the results if the second argument is true
     if [ $2 ]; then
-        wrk -t1 -c1 -d"$DURATION"s "http://127.0.0.1:$PORT" >> "$1.bench"
+        wrk -t"$THREADS" -c"$CLIENTS" -d"$DURATION"s "http://127.0.0.1:$PORT/fib/$FIB_NUMBER" >> "$1.bench"
     else
         # Don't output the dummy run
-        wrk -t1 -c1 -d"$DURATION"s "http://127.0.0.1:$PORT" > /dev/null 2>&1
+        wrk -t"$THREADS" -c"$CLIENTS" -d"$DURATION"s "http://127.0.0.1:$PORT/fib/$FIB_NUMBER" > /dev/null 2>&1
     fi
 
     # Kill all and make sure everything is clear

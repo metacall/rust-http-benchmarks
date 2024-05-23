@@ -7,7 +7,7 @@ use tokio::{
 };
 use warp::{reply::html, Filter};
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 async fn main() {
     let _metacall = switch::initialize().unwrap();
     loaders::from_single_file("ts", "App.tsx").unwrap();
@@ -15,7 +15,7 @@ async fn main() {
     let hello_route = warp::path!("hello" / String)
         .map(|name| html(metacall::<String>("Hello", [name]).unwrap()));
 
-    let fib_noute = warp::path!("fib" / usize)
+    let fib_noute = warp::path!("fib" / u64)
         .map(|num| html(metacall::<String>("Fibonacci", [num as i64, fib(num) as i64]).unwrap()));
 
     let routes = warp::any().and(fib_noute.or(hello_route));

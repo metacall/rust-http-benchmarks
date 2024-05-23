@@ -6,7 +6,7 @@ use tokio::{
     signal::unix::{signal, SignalKind},
 };
 
-async fn fib_route(Path(num): Path<usize>) -> Html<String> {
+async fn fib_route(Path(num): Path<u64>) -> Html<String> {
     Html(metacall::<String>("Fibonacci", [num as i64, fib(num) as i64]).unwrap())
 }
 
@@ -14,11 +14,10 @@ async fn root(Path(name): Path<String>) -> Html<String> {
     Html(metacall::<String>("Hello", [name]).unwrap())
 }
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 async fn main() {
     let _metacall = switch::initialize().unwrap();
     loaders::from_single_file("ts", "App.tsx").unwrap();
-
     let app = Router::new()
         .route("/hello/:name", get(root))
         .route("/fib/:num", get(fib_route));

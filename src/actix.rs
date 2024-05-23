@@ -3,7 +3,7 @@ use metacall::{loaders, metacall, switch};
 use metacall_ssr_benchmark::fib;
 
 #[get("/fib/{num}")]
-async fn fib_route(num: web::Path<usize>) -> impl Responder {
+async fn fib_route(num: web::Path<u64>) -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(metacall::<String>("Fibonacci", [num.clone() as i64, fib(num.into_inner()) as i64]).unwrap())
@@ -16,7 +16,7 @@ async fn hello(name: web::Path<String>) -> impl Responder {
         .body(metacall::<String>("Hello", [name.into_inner()]).unwrap())
 }
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 async fn main() {
     let _metacall = switch::initialize().unwrap();
     loaders::from_single_file("ts", "App.tsx").unwrap();

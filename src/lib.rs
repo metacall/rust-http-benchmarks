@@ -1,4 +1,4 @@
-pub fn fib(n: usize) -> usize {
+pub fn fib(n: u64) -> u64 {
     if n <= 0 {
         return 0;
     } else if n == 1 {
